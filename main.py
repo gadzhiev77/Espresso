@@ -19,13 +19,13 @@ class EditDB(QDialog):
                             (self.NameLineEdit.text(), self.RoastingLineEdit.text(), self.TypeLineEdit.text(),
                              self.TasteLineEdit.text(), self.PriceLineEdit.text(), self.SizeLineEdit.text()))
                 con.commit()
-            self.done(0)
+            self.done(QDialog.Accepted)
         except sqlite3.Error as e:
             QMessageBox.critical(self, "Database Error", str(e))
-            self.done(1)
+            self.done(QDialog.Rejected)
 
     def reject(self) -> None:
-        self.done(0)
+        self.done(QDialog.Rejected)
 
 
 class Window(QMainWindow):
@@ -34,6 +34,7 @@ class Window(QMainWindow):
         uic.loadUi("main.ui", self)
         self.table()
         self.addInfoButton.clicked.connect(self.run)
+        self.deleteInfoButton.clicked.connect(self.delete_record)
 
     def run(self) -> None:
         sys.excepthook = except_hook
@@ -41,18 +42,36 @@ class Window(QMainWindow):
         if EDB.exec() == QDialog.Accepted:
             self.table()
 
+    def delete_record(self) -> None:
+        selected_row = self.tableWidget.currentRow()
+        if selected_row >= 0:
+            coffee_name = self.tableWidget.item(selected_row, 0).text()
+            try:
+                with sqlite3.connect('coffee.sqlite') as con:
+                    cur = con.cursor()
+                    cur.execute('DELETE FROM coffee WHERE Name = ?', (coffee_name,))
+                    con.commit()
+                self.table()
+            except sqlite3.Error as e:
+                QMessageBox.critical(self, "Database Error", str(e))
+        else:
+            QMessageBox.warning(self, "Selection Error", "Пожалуйста, выберите запись для удаления")
+
     def table(self) -> None:
         try:
             with sqlite3.connect('coffee.sqlite') as con:
                 cur = con.cursor()
                 cur.execute("SELECT Name, Roasting, Type, Taste, Price, Size FROM coffee")
                 db = cur.fetchall()
-                self.tableWidget.setColumnCount(len(db[0]))
+
+                self.tableWidget.clear()
+                self.tableWidget.setColumnCount(len(db[0]) if db else 0)
                 self.tableWidget.setRowCount(len(db))
                 self.tableWidget.setHorizontalHeaderLabels(["Name", "Roasting", "Type", "Taste", "Price", "Size"])
+
                 for i, row in enumerate(db):
                     for j, value in enumerate(row):
-                        self.tableWidget.setItem(i, j, QTableWidgetItem(value))
+                        self.tableWidget.setItem(i, j, QTableWidgetItem(str(value)))
         except sqlite3.Error as e:
             QMessageBox.critical(self, "Database Error", str(e))
 
@@ -63,6 +82,7 @@ def except_hook(cls, exception, trace):
     QMessageBox.critical(None, "Critical Error", tb)
 
 
+# Точка входа (Entry point)
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     sys.excepthook = except_hook

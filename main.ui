@@ -29,7 +29,7 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
 
-    <!-- Row 0: Header and Button -->
+    <!-- Row 0: Header and Buttons -->
     <item row="0" column="0">
      <widget class="QLabel" name="label">
       <property name="text">
@@ -44,9 +44,16 @@
       </property>
      </widget>
     </item>
+    <item row="0" column="2">
+     <widget class="QPushButton" name="deleteInfoButton">
+      <property name="text">
+       <string>Удалить</string>
+      </property>
+     </widget>
+    </item>
 
     <!-- Row 1: Table Widget -->
-    <item row="1" column="0" colspan="2">
+    <item row="1" column="0" colspan="3">
      <widget class="QTableWidget" name="tableWidget"/>
     </item>
    </layout>
